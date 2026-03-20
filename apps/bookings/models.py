@@ -12,4 +12,4 @@ class Ticket(models.Model):
     booking_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Квиток {self.id} | {self.user.username} | {self.flight.flight_number}"
+        return f"Ticket {self.id} | {self.user.username} | {self.flight.flight_number}"

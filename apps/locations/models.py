@@ -9,6 +9,7 @@ class Country(models.Model):
 class Airport(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=3, unique=True)
+    city = models.CharField(max_length=100)
     country = models.ForeignKey(Country, on_delete=models.CASCADE)
 
     def __str__(self):
