@@ -8,6 +8,7 @@ class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = ['id', 'user', 'flight', 'seat_number', 'price', 'booking_time']
+        read_only_fields = ['id', 'user', 'booking_time', 'price']
         unique_together = ('flight', 'seat_number')
         
     def validate(self, data):
@@ -17,3 +18,8 @@ class TicketSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Cannot book a ticket for a flight that is cancelled or departed.")
         
         return data
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['flight'] = FlightSerializer(instance.flight).data
+        return representation
