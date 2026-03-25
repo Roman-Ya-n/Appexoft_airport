@@ -24,4 +24,4 @@ class Flight(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
 
     def __str__(self):
-        return f"{self.flight_number}: {self.departure_city} to {self.arrival_city}"
+        return f"{self.flight_number}: {self.departure_airport} to {self.arrival_airport}"
