@@ -21,3 +21,7 @@ db.sqlite3
 
 # Security
 .env
+
+# Settings
+.vscode/
+vscode/
