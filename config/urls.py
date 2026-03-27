@@ -15,12 +15,31 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework import routers
 
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
-urlpatterns = [
+from users.views import UserViewSet
+from locations.views import CountryViewSet, AirportViewSet
+from flights.views import FlightViewSet
+from fleet.views import AirlineViewSet, AirplaneViewSet
+from bookings.views import BookingViewSet, TicketViewSet
+
+router = routers.DefaultRouter()
+router.register(r'users', UserViewSet, basename='user')
+router.register(r'countries', CountryViewSet, basename='country')
+router.register(r'airports', AirportViewSet, basename='airport')
+router.register(r'flights', FlightViewSet, basename='flight')
+router.register(r'airlines', AirlineViewSet, basename='airline')
+router.register(r'airplanes', AirplaneViewSet, basename='airplane')
+router.register(r'bookings', BookingViewSet, basename='booking')
+router.register(r'tickets', TicketViewSet, basename='ticket')
+
+urlpatterns = [    
+    path('api/', include(router.urls)),
+    
     path('admin/', admin.site.urls),
     
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
