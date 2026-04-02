@@ -25,7 +25,7 @@ from users.views import UserViewSet
 from locations.views import CountryViewSet, AirportViewSet
 from flights.views import FlightViewSet
 from fleet.views import AirlineViewSet, AirplaneViewSet
-from bookings.views import BookingViewSet, TicketViewSet
+from bookings.views import SeatViewSet, OrderViewSet, TicketViewSet
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
@@ -34,7 +34,8 @@ router.register(r'airports', AirportViewSet, basename='airport')
 router.register(r'flights', FlightViewSet, basename='flight')
 router.register(r'airlines', AirlineViewSet, basename='airline')
 router.register(r'airplanes', AirplaneViewSet, basename='airplane')
-router.register(r'bookings', BookingViewSet, basename='booking')
+router.register(r'seats', SeatViewSet, basename='seat')
+router.register(r'orders', OrderViewSet, basename='order')
 router.register(r'tickets', TicketViewSet, basename='ticket')
 
 urlpatterns = [    

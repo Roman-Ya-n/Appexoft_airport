@@ -9,6 +9,7 @@ class Flight(models.Model):
     
     departure_airport = models.ForeignKey(Airport, on_delete=models.CASCADE, related_name='departing_flights')
     arrival_airport = models.ForeignKey(Airport, on_delete=models.CASCADE, related_name='arriving_flights')
+    currency = models.CharField(max_length=3, default='USD')
     
     departure_time = models.DateTimeField()
     arrival_time = models.DateTimeField()
