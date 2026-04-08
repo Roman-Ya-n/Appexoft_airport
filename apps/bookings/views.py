@@ -6,6 +6,7 @@ from rest_framework.response import Response
 
 from django.db import models
 
+from payments.models import Transaction
 from .models import Seat, Order, Ticket
 from .serializers import SeatSerializer, OrderSerializer, TicketSerializer
 
@@ -62,9 +63,6 @@ class OrderViewSet(mixins.ListModelMixin,
         if order.status != 'pending':
             return Response({'detail': 'This order is already paid or cancelled.'}, status=400)
         
-        order.status = 'paid'
-        order.save()
-        
         total_price_cents = int(order.total_price * 100)
         try:
             checkout_session = stripe.checkout.Session.create(
@@ -83,8 +81,16 @@ class OrderViewSet(mixins.ListModelMixin,
                 success_url='https://some-test-url.com/success',
                 cancel_url='https://some-test-url.com/cancel',
             )
+            
+            Transaction.objects.create(
+                stripe_session_id=checkout_session.id,
+                order=order,
+                amount=order.total_price,
+                currency=order.currency,
+                status='pending'
+            )
         
-            return Response({'checkout_url': checkout_session.url, 'detail': 'Order has been paid successfully.'}, status=200)
+            return Response({'checkout_url': checkout_session.url}, status=200)
 
         except Exception as e:
             return Response({'detail': f'Payment failed: {str(e)}'}, status=400)

@@ -35,7 +35,8 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = env('ALLOWED_HOSTS') if env('ALLOWED_HOSTS') else []
+hosts = env('ALLOWED_HOSTS', default='127.0.0.1').split(',')
+ALLOWED_HOSTS = hosts if hosts else []
 
 # Application definition
 
@@ -55,6 +56,7 @@ INSTALLED_APPS = [
     'fleet',
     'flights',
     'bookings',
+    'payments',
 ]
 
 MIDDLEWARE = [
@@ -178,3 +180,5 @@ SIMPLE_JWT = {
 }
 
 STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY')
+
+STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET')
