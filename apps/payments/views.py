@@ -10,6 +10,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.http import HttpResponse
 
+from django.core.mail import send_mail
+
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
@@ -48,6 +50,18 @@ def stripe_webhook(request):
             order = transaction.order
             order.status = 'paid'
             order.save()
+            
+            user_email = order.user.email
+            
+            if user_email:
+                subject = 'Payment Confirmation'
+                message = f'Thank you for your payment. Your order {order.id} has been successfully processed.'
+                from_email = settings.DEFAULT_FROM_EMAIL
+                
+                try:
+                    send_mail(subject, message, from_email, [user_email], fail_silently=False)
+                except Exception as e:
+                    print(f"Error sending email: {e}")
             
             
         except Transaction.DoesNotExist:
