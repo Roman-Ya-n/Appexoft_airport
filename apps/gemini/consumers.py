@@ -6,23 +6,24 @@ from .gemini_chat import ask_ai
 class GeminiConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
-        await self.send(json.dumps({
-            'message': 'Connected to Gemini WebSocket!'
-        }))
+        
+        self.chat_session = ask_ai()
     
-    async def disconnect(self, close_code):
-        pass
     
     async def receive(self, text_data):
         data = json.loads(text_data)
-        message = data['message']       
+        user_message = data['message']       
         
         try:
-            response = await sync_to_async(ask_ai)(message)
+            if not self.chat_session:
+                self.chat_session = ask_ai()
             
-            await self.send(text_data=json.dumps({
-                'message': response
-            }))
+            if user_message:
+                response = await sync_to_async(self.chat_session.send_message)(user_message)
+            
+                await self.send(text_data=json.dumps({
+                    'message': response.text
+                }))
         
         except Exception as e:
             await self.send(text_data=json.dumps({
