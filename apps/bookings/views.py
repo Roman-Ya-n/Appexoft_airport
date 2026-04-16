@@ -5,9 +5,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from django.db import models
+
+from payments.models import Transaction
 from .models import Seat, Order, Ticket
 from .serializers import SeatSerializer, OrderSerializer, TicketSerializer
 
+import stripe, config
+stripe.api_key = config.settings.STRIPE_SECRET_KEY
 
 class SeatViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = SeatSerializer
@@ -59,10 +63,37 @@ class OrderViewSet(mixins.ListModelMixin,
         if order.status != 'pending':
             return Response({'detail': 'This order is already paid or cancelled.'}, status=400)
         
-        order.status = 'paid'
-        order.save()
+        total_price_cents = int(order.total_price * 100)
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=[{
+                    'price_data': {
+                        'currency': order.currency,
+                        'product_data': {
+                            'name': f'Flight {order.tickets.first().seat.flight.flight_number} Order #{order.id}',
+                        },
+                        'unit_amount': total_price_cents,
+                    },
+                    'quantity': 1,
+                }],
+                mode='payment',
+                success_url='https://some-test-url.com/success',
+                cancel_url='https://some-test-url.com/cancel',
+            )
+            
+            Transaction.objects.create(
+                stripe_session_id=checkout_session.id,
+                order=order,
+                amount=order.total_price,
+                currency=order.currency,
+                status='pending'
+            )
         
-        return Response({'detail': 'Order has been paid successfully.'}, status=200)
+            return Response({'checkout_url': checkout_session.url}, status=200)
+
+        except Exception as e:
+            return Response({'detail': f'Payment failed: {str(e)}'}, status=400)
 
 class TicketViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = TicketSerializer
