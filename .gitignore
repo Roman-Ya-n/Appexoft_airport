@@ -25,3 +25,8 @@ db.sqlite3
 # Settings
 .vscode/
 vscode/
+
+# Frontend
+node_modules/
+dist/
+build/
