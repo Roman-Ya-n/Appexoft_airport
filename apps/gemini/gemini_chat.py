@@ -16,24 +16,15 @@ Your main rules:
 
 def get_flight_status(flight_number: str) -> str:
     """Returns the status of a flight given its number."""
-    
-    def fetch_data():
-        from flights.models import Flight
-        try:
-            flight = Flight.objects.select_related('departure_airport', 'arrival_airport').get(flight_number__iexact=flight_number)
-            return (f"Flight {flight.flight_number}. "
-                    f"Route: {flight.departure_airport.city} -> {flight.arrival_airport.city}. "
-                    f"Status: {flight.get_status_display()}. "
-                    f"Departure: {flight.departure_time.strftime('%Y-%m-%d %H:%M')}.")
 
-        except Exception as e:
-            print(f"Error fetching flight status: {str(e)}")
-            return f"Sorry, I couldn't find any information about flight {flight_number}."
-        
     try:
-        from asgiref.sync import sync_to_async, async_to_sync
-        result = async_to_sync(sync_to_async(fetch_data))()
-        return result
+        from flights.models import Flight
+        flight = Flight.objects.select_related('departure_airport', 'arrival_airport').get(flight_number__iexact=flight_number)
+        return (f"Flight {flight.flight_number}. "
+                f"Route: {flight.departure_airport.city} -> {flight.arrival_airport.city}. "
+                f"Status: {flight.get_status_display()}. "
+                f"Departure: {flight.departure_time.strftime('%Y-%m-%d %H:%M')}.")
+        
     except Exception as e:
         print(f"Error fetching flight status: {str(e)}")
         return f"Sorry, I couldn't find any information about flight {flight_number}."
@@ -41,29 +32,20 @@ def get_flight_status(flight_number: str) -> str:
 def get_departure_board(departure_airport_city: str, arrival_airport_city: str) -> str:
     """Returns the departure board for a given airport. If givven any city, ask for another one."""
     
-    def fetch_data():
-        from flights.models import Flight
-        try:
-            flights = Flight.objects.select_related('departure_airport', 'arrival_airport').filter(
-                departure_airport__city__iexact=departure_airport_city,
-                arrival_airport__city__iexact=arrival_airport_city
-            ).order_by('departure_time')[:5] 
-            if not flights:
-                return f"No upcoming flights found from {departure_airport_city} to {arrival_airport_city}."
-
-            response = f"Departure board for {departure_airport_city} to {arrival_airport_city}:\n"
-            for flight in flights:
-                response += (f"- Flight {flight.flight_number} to {flight.arrival_airport.city} at "
-                             f"{flight.departure_time.strftime('%Y-%m-%d %H:%M')} - Status: {flight.get_status_display()}\n")
-
-        except Exception as e:
-            print(f"Error fetching departure board: {str(e)}")
-            return f"Departure board for {departure_airport_city} to {arrival_airport_city}."
-    
     try:
-        from asgiref.sync import sync_to_async, async_to_sync
-        result = async_to_sync(sync_to_async(fetch_data))()
-        return result
+        from flights.models import Flight
+        flights = Flight.objects.select_related('departure_airport', 'arrival_airport').filter(
+            departure_airport__city__iexact=departure_airport_city,
+            arrival_airport__city__iexact=arrival_airport_city
+        ).order_by('departure_time')[:5] 
+        if not flights:
+            return f"No upcoming flights found from {departure_airport_city} to {arrival_airport_city}."
+
+        response = f"Departure board for {departure_airport_city} to {arrival_airport_city}:\n"
+        for flight in flights:
+            response += (f"- Flight {flight.flight_number} to {flight.arrival_airport.city} at "
+                         f"{flight.departure_time.strftime('%Y-%m-%d %H:%M')} - Status: {flight.get_status_display()}\n")
+
     except Exception as e:
         print(f"Error fetching departure board: {str(e)}")
         return f"Sorry, I couldn't retrieve the departure board for {departure_airport_city} to {arrival_airport_city} at the moment."
@@ -72,38 +54,28 @@ def get_departure_board(departure_airport_city: str, arrival_airport_city: str) 
 def get_flight_prices(flight_number: str) -> str:
     """Returns the minimum price for each seat class (economy, business, first) for a given flight number."""
     
-    def fetch_data():
+    try:
         from django.db.models import Min, Count
         from bookings.models import Seat
-        try:
-            seat_stats = Seat.objects.filter(
-                flight__flight_number__iexact=flight_number
-            ).values('seat_class').annotate(
+        seat_stats = Seat.objects.filter(
+            flight__flight_number__iexact=flight_number
+        ).values('seat_class').annotate(
                 min_price=Min('price'),
                 available_seats=Count('id')
             )
-
-            if not seat_stats:
-                return f"Sorry, I couldn't find any information about seats on flight {flight_number} or all tickets are sold out."
-
-            results = [f"Available tickets for flight {flight_number}:"]
-
-            class_names = {'economy': 'Economy', 'business': 'Business', 'first': 'First Class'}
-
-            for stat in seat_stats:
-                class_display = class_names.get(stat['seat_class'], stat['seat_class'])
-                results.append(f"- {class_display}: from {stat['min_price']} (available seats: {stat['available_seats']})")
-
-            return "\n".join(results)
-
-        except Exception as e:
-            print(f"Error fetching flight prices: {str(e)}")
-            return f"Sorry, I couldn't retrieve price information for flight {flight_number} at the moment."
         
-    try:
-        from asgiref.sync import sync_to_async, async_to_sync
-        result = async_to_sync(sync_to_async(fetch_data))()
-        return result
+        if not seat_stats:
+            return f"Sorry, I couldn't find any information about seats on flight {flight_number} or all tickets are sold out."
+        
+        results = [f"Available tickets for flight {flight_number}:"]
+        class_names = {'economy': 'Economy', 'business': 'Business', 'first': 'First Class'}
+        
+        for stat in seat_stats:
+            class_display = class_names.get(stat['seat_class'], stat['seat_class'])
+            results.append(f"- {class_display}: from {stat['min_price']} (available seats: {stat['available_seats']})")
+            
+        return "\n".join(results)
+        
     except Exception as e:
         print(f"Error fetching flight prices: {str(e)}")
         return f"Sorry, I couldn't retrieve price information for flight {flight_number} at the moment."
