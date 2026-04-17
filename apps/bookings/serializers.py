@@ -2,6 +2,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db import transaction
 from rest_framework import serializers
+
+from django.db import models
 from .models import Seat, Order, Ticket
 from flights.serializers import FlightSerializer
 
@@ -26,6 +28,8 @@ class OrderSerializer(serializers.ModelSerializer):
         flight = data.get('flight')
         seat_ids = data.get('seat_ids', [])
         
+        now = timezone.now()
+        
         seats = Seat.objects.filter(id__in=seat_ids, flight=flight)
         
         if len(seats) != len(seat_ids):
@@ -33,6 +37,13 @@ class OrderSerializer(serializers.ModelSerializer):
         
         if flight and flight.status in ['cancelled', 'departed']:
             raise serializers.ValidationError("Cannot book a ticket for a flight that is cancelled or departed.")
+        
+        taken_seats = Ticket.objects.filter(seat__in=seats).filter(
+            models.Q(order__expires_at__gt=now) | models.Q(order__status='paid') | models.Q(order__status='pending')
+        ).exists()
+        
+        if taken_seats:
+            raise serializers.ValidationError("One or more selected seats are already booked.")
         
         data['seats_objects'] = seats
         return data

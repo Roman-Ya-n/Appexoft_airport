@@ -26,6 +26,7 @@ from locations.views import CountryViewSet, AirportViewSet
 from flights.views import FlightViewSet
 from fleet.views import AirlineViewSet, AirplaneViewSet
 from bookings.views import SeatViewSet, OrderViewSet, TicketViewSet
+from payments.views import TransactionViewSet, stripe_webhook
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
@@ -37,8 +38,10 @@ router.register(r'airplanes', AirplaneViewSet, basename='airplane')
 router.register(r'seats', SeatViewSet, basename='seat')
 router.register(r'orders', OrderViewSet, basename='order')
 router.register(r'tickets', TicketViewSet, basename='ticket')
+router.register(r'transactions', TransactionViewSet, basename='transaction')
 
 urlpatterns = [    
+    path('api/payments/webhook/', stripe_webhook, name='stripe-webhook'),
     path('api/', include(router.urls)),
     
     path('admin/', admin.site.urls),
